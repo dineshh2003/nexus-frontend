@@ -18,7 +18,7 @@ export const NEXT_AUTH_CONFIG: NextAuthOptions = {
         try {
           console.log(`Authorizing user: ${credentials.username} with password`);
           
-          const response = await fetch("http://localhost:8000/graphql", {
+          const response = await fetch("https://nexus-backend-uts0.onrender.com/graphql", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

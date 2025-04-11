@@ -131,7 +131,7 @@ export default function BookingAnalytics() {
   // Fetch detailed room information by ID
   const fetchRoomDetails = async (roomId: string): Promise<Room | null> => {
     try {
-      const response = await fetch("http://localhost:8000/graphql", {
+      const response = await fetch("https://nexus-backend-uts0.onrender.com/graphql", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -207,7 +207,7 @@ export default function BookingAnalytics() {
   const fetchBookings = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch("http://localhost:8000/graphql", {
+      const response = await fetch("https://nexus-backend-uts0.onrender.com/graphql", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -335,7 +335,7 @@ export default function BookingAnalytics() {
 
   const fetchRooms = async () => {
     try {
-      const response = await fetch("http://localhost:8000/graphql", {
+      const response = await fetch("https://nexus-backend-uts0.onrender.com/graphql", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

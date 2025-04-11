@@ -220,7 +220,7 @@ export default function HotelDashboard() {
   const adminId = session?.user?.id
 
   // GraphQL endpoint - adjust based on your environment
-  const endpoint = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || 'http://localhost:8000/graphql'
+  const endpoint = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || 'https://nexus-backend-uts0.onrender.com/graphql'
 
   // Extract fetchDashboardData as a reusable function outside useEffect
   const fetchDashboardData = async (forceRefresh = false): Promise<void> => {

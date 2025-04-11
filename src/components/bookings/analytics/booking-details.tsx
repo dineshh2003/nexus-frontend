@@ -45,7 +45,7 @@ export default function BookingDetails({ booking, onClose, roomDetails }: Bookin
       action: async () => {
         setIsLoading(true)
         try {
-          const response = await fetch("http://localhost:8000/graphql", {
+          const response = await fetch("https://nexus-backend-uts0.onrender.com/graphql", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -102,7 +102,7 @@ export default function BookingDetails({ booking, onClose, roomDetails }: Bookin
       action: async () => {
         setIsLoading(true)
         try {
-          const response = await fetch("http://localhost:8000/graphql", {
+          const response = await fetch("https://nexus-backend-uts0.onrender.com/graphql", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -152,7 +152,7 @@ export default function BookingDetails({ booking, onClose, roomDetails }: Bookin
   const handleCheckout = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch("http://localhost:8000/graphql", {
+      const response = await fetch("https://nexus-backend-uts0.onrender.com/graphql", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -198,7 +198,7 @@ export default function BookingDetails({ booking, onClose, roomDetails }: Bookin
   const handleCheckin = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch("http://localhost:8000/graphql", {
+      const response = await fetch("https://nexus-backend-uts0.onrender.com/graphql", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -249,7 +249,7 @@ export default function BookingDetails({ booking, onClose, roomDetails }: Bookin
       action: async () => {
         setIsLoading(true)
         try {
-          const response = await fetch("http://localhost:8000/graphql", {
+          const response = await fetch("https://nexus-backend-uts0.onrender.com/graphql", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -311,7 +311,7 @@ export default function BookingDetails({ booking, onClose, roomDetails }: Bookin
       action: async () => {
         setIsLoading(true)
         try {
-          const response = await fetch("http://localhost:8000/graphql", {
+          const response = await fetch("https://nexus-backend-uts0.onrender.com/graphql", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -382,7 +382,7 @@ export default function BookingDetails({ booking, onClose, roomDetails }: Bookin
       action: async () => {
         setIsLoading(true)
         try {
-          const response = await fetch("http://localhost:8000/graphql", {
+          const response = await fetch("https://nexus-backend-uts0.onrender.com/graphql", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -446,7 +446,7 @@ export default function BookingDetails({ booking, onClose, roomDetails }: Bookin
       action: async () => {
         setIsLoading(true)
         try {
-          const response = await fetch("http://localhost:8000/graphql", {
+          const response = await fetch("https://nexus-backend-uts0.onrender.com/graphql", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -510,7 +510,7 @@ export default function BookingDetails({ booking, onClose, roomDetails }: Bookin
       action: async () => {
         setIsLoading(true)
         try {
-          const response = await fetch("http://localhost:8000/graphql", {
+          const response = await fetch("https://nexus-backend-uts0.onrender.com/graphql", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -576,7 +576,7 @@ export default function BookingDetails({ booking, onClose, roomDetails }: Bookin
   const handleAddNote = async (note: string) => {
     setIsLoading(true)
     try {
-      const response = await fetch("http://localhost:8000/graphql", {
+      const response = await fetch("https://nexus-backend-uts0.onrender.com/graphql", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -68,7 +68,7 @@ export function BookingsList({ onSelectBooking }: BookingsListProps) {
 
 
 
-  const endpoint = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || 'http://localhost:8000/graphql'
+  const endpoint = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || 'https://nexus-backend-uts0.onrender.com/graphql'
   
   const handleTabChange = (value: string) => {
     setActiveTab(value as BookingCategory);
