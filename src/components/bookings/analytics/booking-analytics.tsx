@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { format, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns"
-import { ChevronLeft, ChevronRight, Calendar, Filter, RefreshCw, HelpCircle } from "lucide-react"
+import { ChevronLeft, ChevronRight, Calendar, Filter, RefreshCw, HelpCircle, Bell } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
+import { Badge } from "@/components/ui/badge"
 import BookingCalendar from "./booking-calendar"
 import BookingDetails from "./booking-details"
 import { useHotelContext } from "@/providers/hotel-provider"
@@ -110,6 +111,11 @@ export default function BookingAnalytics() {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [showBookingDetails, setShowBookingDetails] = useState<boolean>(false)
+  const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date())
+  const [hasNewBookings, setHasNewBookings] = useState<boolean>(false)
+  const [isAutoRefreshEnabled, setIsAutoRefreshEnabled] = useState<boolean>(true)
+  const [bookingCount, setBookingCount] = useState<number>(0)
+  const bookingsRef = useRef<Booking[]>([]);
 
   // Filter states
   const [selectedFloor, setSelectedFloor] = useState<string>("all")
@@ -121,12 +127,113 @@ export default function BookingAnalytics() {
   const { data: session } = useSession()
   const { toast } = useToast()
 
+  // Set up polling interval for new bookings (in milliseconds)
+  const POLLING_INTERVAL = 30000; // 30 seconds
+
+  // Function to check for new bookings
+  const checkForNewBookings = useCallback(async () => {
+    if (!selectedHotel?.id) return;
+    
+    try {
+      const response = await fetch("https://nexus-backend-uts0.onrender.com/graphql", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${(session as any)?.accessToken || ''}`
+        },
+        body: JSON.stringify({
+          query: `
+            query {
+              bookingsCount(
+                hotelId: "${selectedHotel?.id}"
+              )
+            }
+          `
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (result.data && result.data.bookingsCount !== undefined) {
+        const newCount = result.data.bookingsCount;
+        
+        // Compare with previous count to detect new bookings
+        if (newCount > bookingCount) {
+          setHasNewBookings(true);
+          if (isAutoRefreshEnabled) {
+            fetchBookings();
+          } else {
+            // Notify user about new bookings
+            toast({
+              title: "New Booking Detected",
+              description: `There ${newCount - bookingCount === 1 ? 'is' : 'are'} ${newCount - bookingCount} new booking${newCount - bookingCount === 1 ? '' : 's'}.`,
+              duration: 5000,
+            });
+          }
+        }
+        
+        setBookingCount(newCount);
+      }
+    } catch (error) {
+      console.error("Error checking for new bookings:", error);
+    }
+  }, [selectedHotel, session, bookingCount, isAutoRefreshEnabled]);
+
+  // Initial fetch of bookings and rooms
   useEffect(() => {
     if (selectedHotel?.id) {
-      fetchBookings()
-      fetchRooms()
+      fetchBookings();
+      fetchRooms();
     }
-  }, [currentDate, selectedHotel])
+  }, [currentDate, selectedHotel]);
+
+  // Set up polling for new bookings
+  useEffect(() => {
+    if (!selectedHotel?.id) return;
+    
+    // Check immediately on mount
+    checkForNewBookings();
+    
+    // Set up interval
+    const intervalId = setInterval(() => {
+      checkForNewBookings();
+    }, POLLING_INTERVAL);
+    
+    // Clean up interval on unmount
+    return () => clearInterval(intervalId);
+  }, [selectedHotel, checkForNewBookings]);
+
+  // Subscribe to booking creation events (if available)
+  useEffect(() => {
+    // This is a placeholder for a real event subscription
+    // In a real implementation, you would use WebSockets or SSE to listen for booking events
+    
+    const setupBookingEventListener = () => {
+      // Example if using a WebSocket service:
+      // const socket = new WebSocket('wss://your-websocket-service');
+      // socket.onmessage = (event) => {
+      //   const data = JSON.parse(event.data);
+      //   if (data.type === 'booking_created' && data.hotelId === selectedHotel?.id) {
+      //     setHasNewBookings(true);
+      //     if (isAutoRefreshEnabled) {
+      //       fetchBookings();
+      //     }
+      //   }
+      // };
+      // return socket;
+      
+      return null;
+    };
+    
+    const eventSource = setupBookingEventListener();
+    
+    // Clean up
+    return () => {
+      // if (eventSource) {
+      //   eventSource.close();
+      // }
+    };
+  }, [selectedHotel]);
 
   // Fetch detailed room information by ID
   const fetchRoomDetails = async (roomId: string): Promise<Room | null> => {
@@ -292,10 +399,34 @@ export default function BookingAnalytics() {
           } as Booking
         })
 
-        setBookings(bookingsData)
+        // Check if there are new bookings compared to our last fetch
+        if (bookingsRef.current.length > 0 && bookingsData.length > bookingsRef.current.length) {
+          // Get IDs of current bookings
+          const currentBookingIds = new Set(bookingsRef.current.map(b => b.id));
+          
+          // Find new bookings
+          const newBookings = bookingsData.filter((b: Booking) => !currentBookingIds.has(b.id));
+          
+          if (newBookings.length > 0) {
+            toast({
+              title: "New Bookings Loaded",
+              description: `${newBookings.length} new booking${newBookings.length === 1 ? '' : 's'} added.`,
+              duration: 4000,
+            });
+          }
+        }
+        
+        // Update our reference copy
+        bookingsRef.current = bookingsData;
+        setBookings(bookingsData);
         
         // Fetch detailed room information for bookings
-        await fetchAllRoomDetails(bookingsData)
+        await fetchAllRoomDetails(bookingsData);
+        
+        // Update bookingCount and reset new bookings flag
+        setBookingCount(bookingsData.length);
+        setHasNewBookings(false);
+        setLastRefreshed(new Date());
       } else {
         console.error("Error fetching bookings: No data in response", result)
         // Fall back to mock data for development/testing
@@ -308,7 +439,9 @@ export default function BookingAnalytics() {
           numberOfGuests: booking.numberOfGuests || 1
         })) as Booking[]
         
+        bookingsRef.current = enhancedMockData;
         setBookings(enhancedMockData)
+        setBookingCount(enhancedMockData.length);
       }
     } catch (error) {
       console.error("Error fetching bookings:", error)
@@ -327,7 +460,9 @@ export default function BookingAnalytics() {
         numberOfGuests: booking.numberOfGuests || 1
       })) as Booking[]
       
+      bookingsRef.current = enhancedMockData;
       setBookings(enhancedMockData)
+      setBookingCount(enhancedMockData.length);
     } finally {
       setIsLoading(false)
     }
@@ -458,6 +593,17 @@ export default function BookingAnalytics() {
     fetchRooms()
   }
 
+  const toggleAutoRefresh = () => {
+    setIsAutoRefreshEnabled(prev => !prev);
+    toast({
+      title: isAutoRefreshEnabled ? "Auto-refresh disabled" : "Auto-refresh enabled",
+      description: isAutoRefreshEnabled 
+        ? "You will be notified when new bookings are available." 
+        : "New bookings will be loaded automatically.",
+      duration: 3000,
+    });
+  }
+
   // Calculate days for the current month view
   const monthStart = startOfMonth(currentDate)
   const monthEnd = endOfMonth(currentDate)
@@ -524,8 +670,31 @@ export default function BookingAnalytics() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={handleRefresh}>
-            <RefreshCw className="h-4 w-4" />
+          <div className="text-xs text-muted-foreground mr-2">
+            Last refreshed: {format(lastRefreshed, "HH:mm:ss")}
+          </div>
+          <Button 
+            variant={hasNewBookings ? "default" : "outline"} 
+            size="icon" 
+            onClick={handleRefresh}
+            className={hasNewBookings ? "bg-green-600 hover:bg-green-700" : ""}
+          >
+            {hasNewBookings ? (
+              <>
+                <Bell className="h-4 w-4" />
+                <span className="sr-only">New bookings available</span>
+              </>
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="text-xs" 
+            onClick={toggleAutoRefresh}
+          >
+            Auto-refresh: {isAutoRefreshEnabled ? "ON" : "OFF"}
           </Button>
           <Button variant="outline" size="icon">
             <HelpCircle className="h-4 w-4" />
@@ -547,6 +716,11 @@ export default function BookingAnalytics() {
               <Button variant="ghost" size="sm" onClick={handleNextMonth}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
+              {bookings.length > 0 && (
+                <Badge className="ml-2 bg-blue-600">
+                  {bookings.length} booking{bookings.length !== 1 ? 's' : ''}
+                </Badge>
+              )}
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">

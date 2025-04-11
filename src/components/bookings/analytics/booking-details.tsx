@@ -22,9 +22,10 @@ interface BookingDetailsProps {
   booking: Booking;
   onClose: () => void;
   roomDetails?: Room; // Optional detailed room information
+  onRefresh?: () => void; // Added callback for parent refresh
 }
 
-export default function BookingDetails({ booking, onClose, roomDetails }: BookingDetailsProps) {
+export default function BookingDetails({ booking, onClose, roomDetails, onRefresh }: BookingDetailsProps) {
   const [activeTab, setActiveTab] = useState<string>("booking-details")
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialog>({
@@ -76,6 +77,8 @@ export default function BookingDetails({ booking, onClose, roomDetails }: Bookin
               title: "Success",
               description: "Booking dates updated successfully",
             })
+            // Call the refresh callback if provided
+            if (onRefresh) onRefresh();
           } else {
             throw new Error("Failed to update booking dates")
           }
@@ -131,6 +134,7 @@ export default function BookingDetails({ booking, onClose, roomDetails }: Bookin
               title: "Success",
               description: "Occupancy updated successfully",
             })
+            if (onRefresh) onRefresh();
           } else {
             throw new Error("Failed to update occupancy")
           }
@@ -179,6 +183,7 @@ export default function BookingDetails({ booking, onClose, roomDetails }: Bookin
           title: "Success",
           description: "Guest checked out successfully",
         })
+        if (onRefresh) onRefresh();
         onClose()
       } else {
         throw new Error("Failed to check out guest")
@@ -225,6 +230,7 @@ export default function BookingDetails({ booking, onClose, roomDetails }: Bookin
           title: "Success",
           description: "Guest checked in successfully",
         })
+        if (onRefresh) onRefresh();
         onClose()
       } else {
         throw new Error("Failed to check in guest")
@@ -285,6 +291,7 @@ export default function BookingDetails({ booking, onClose, roomDetails }: Bookin
               title: "Success",
               description: "Charges added successfully",
             })
+            if (onRefresh) onRefresh();
           } else {
             throw new Error("Failed to add charges")
           }
@@ -347,6 +354,7 @@ export default function BookingDetails({ booking, onClose, roomDetails }: Bookin
               title: "Success",
               description: "Payment collected successfully",
             })
+            if (onRefresh) onRefresh();
           } else {
             throw new Error("Failed to collect payment")
           }
@@ -411,6 +419,7 @@ export default function BookingDetails({ booking, onClose, roomDetails }: Bookin
               title: "Success",
               description: "Room pinned successfully",
             })
+            if (onRefresh) onRefresh();
           } else {
             throw new Error("Failed to pin room")
           }
@@ -475,6 +484,7 @@ export default function BookingDetails({ booking, onClose, roomDetails }: Bookin
               title: "Success",
               description: "Room unpinned successfully",
             })
+            if (onRefresh) onRefresh();
           } else {
             throw new Error("Failed to unpin room")
           }
@@ -539,6 +549,7 @@ export default function BookingDetails({ booking, onClose, roomDetails }: Bookin
               title: "Success",
               description: "Room status updated successfully",
             })
+            if (onRefresh) onRefresh();
           } else {
             throw new Error("Failed to update room status")
           }
@@ -605,6 +616,7 @@ export default function BookingDetails({ booking, onClose, roomDetails }: Bookin
           title: "Success",
           description: "Note added successfully",
         })
+        if (onRefresh) onRefresh();
       } else {
         throw new Error("Failed to add note")
       }
