@@ -47,10 +47,8 @@ export default function LoginForm() {
       console.log("User authenticated with ID, redirecting to dashboard...")
       setDebugInfo(prev => `${prev}\nAuthenticated with ID! Redirecting...`)
       
-      // Single redirect with adequate delay
-      setTimeout(() => {
-        router.push("/dashboard")
-      }, 1000)
+      router.push("/dashboard")
+   
     }
   }, [status, session, router])
 

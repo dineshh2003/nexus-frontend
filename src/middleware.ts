@@ -20,41 +20,34 @@ const authRoutes = [
   '/forgot-password',
 ]
 
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-
-  // Get the token (if it exists)
+  
+  // Get the token with explicit options
   const token = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET,
+    secureCookie: process.env.NODE_ENV === "production"
   })
-
-  // Check if the path is a protected route
-  const isProtectedPath = protectedPaths.some(path => 
-    pathname === path || pathname.startsWith(`${path}/`)
-  )
-
-  // Check if the path is an auth route (login, signup)
-  const isAuthPath = authRoutes.some(path => 
-    pathname === path || pathname.startsWith(`${path}/`)
-  )
-
-  // If the path is protected and the user is not logged in,
-  // redirect to the login page
-  if (isProtectedPath && !token) {
+  
+  // Log for debugging
+  console.log(`Middleware path: ${pathname}, Has token: ${!!token}`)
+  
+  // For protected paths without a token, redirect to login
+  if (protectedPaths.some(p => pathname === p || pathname.startsWith(`${p}/`)) && !token) {
+    console.log('Protected path, no token - redirecting to login')
     const url = new URL('/login', request.url)
-    // Add the current path as a "callbackUrl" param to redirect after login
-    url.searchParams.set('callbackUrl', encodeURI(pathname))
+    url.searchParams.set('callbackUrl', pathname)
     return NextResponse.redirect(url)
   }
-
-  // If the user is logged in and trying to access auth pages,
-  // redirect to the dashboard
-  if (isAuthPath && token) {
+  
+  // For login/auth paths with a token, redirect to dashboard
+  if (authRoutes.some(p => pathname === p || pathname.startsWith(`${p}/`)) && token) {
+    console.log('Auth path with token - redirecting to dashboard')
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
-
-  // Allow the request to continue
+  
   return NextResponse.next()
 }
 
