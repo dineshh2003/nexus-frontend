@@ -138,7 +138,7 @@ export default function BookingForm({ hotelId, hotelName, roomId, roomNumber, ro
 
       // This would be your actual GraphQL mutation call
       // Here's a placeholder for the API call
-      const response = await fetch('http://localhost:8000/graphql', {
+      const response = await fetch('https://nexus-backend-uts0.onrender.com/graphql', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,6 +1,7 @@
+// RoomGrid.tsx - Updated version
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import RoomBlock from "./room-block"
 
 type Room = {
@@ -36,82 +37,96 @@ type RoomGridProps = {
   hotelId: string
   floorCount: number
   onCreateBooking: (room: Room) => void
+  refreshTrigger?: number // Add this prop to trigger refreshes
 }
 
-export default function RoomGrid({ hotelId, floorCount, onCreateBooking }: RoomGridProps) {
+export default function RoomGrid({ hotelId, floorCount, onCreateBooking, refreshTrigger = 0 }: RoomGridProps) {
   const [rooms, setRooms] = useState<Room[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  
+  // Using the correct backend URL
+  const graphqlEndpoint = 'https://nexus-backend-uts0.onrender.com/graphql'
 
-  useEffect(() => {
-    const fetchRooms = async () => {
-      if (!hotelId) return
-      
-      setIsLoading(true)
-      try {
-        // Using the provided GraphQL query
-        const query = `
-          query GetRooms {
-            rooms(
-              hotelId: "${hotelId}"
-              limit: 100
-            ) {
-              id
-              roomNumber
-              roomType
-              bedType
-              pricePerNight
-              status
-              amenities
-              images
-              isActive
-              createdAt
-              updatedAt
-              maintenanceNotes
-              extraBedAllowed
-              lastMaintained
-              extraBedPrice
-              baseOccupancy
-              maxOccupancy
-              lastCleaned
-              floor
-              hotelId
-              roomSize
-              bedCount
-            }
+  // Function to fetch rooms
+  const fetchRooms = useCallback(async () => {
+    if (!hotelId) return
+    
+    setIsLoading(true)
+    try {
+      // Using the provided GraphQL query
+      const query = `
+        query GetRooms {
+          rooms(
+            hotelId: "${hotelId}"
+            limit: 100
+          ) {
+            id
+            roomNumber
+            roomType
+            bedType
+            pricePerNight
+            status
+            amenities
+            images
+            isActive
+            createdAt
+            updatedAt
+            maintenanceNotes
+            extraBedAllowed
+            lastMaintained
+            extraBedPrice
+            baseOccupancy
+            maxOccupancy
+            lastCleaned
+            floor
+            hotelId
+            roomSize
+            bedCount
           }
-        `
-
-        // Replace this with your actual GraphQL fetch function
-        const response = await fetch('http://localhost:8000/graphql', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ query }),
-        })
-
-        const data = await response.json()
-        
-        if (data.data && data.data.rooms) {
-          const processedRooms = data.data.rooms.map((room: Room) => ({
-            ...room,
-            isAvailable: room.status === "AVAILABLE"
-          }))
-          setRooms(processedRooms)
-        } else {
-          console.error("Error fetching rooms: Invalid response structure", data)
-          setRooms([])
         }
-      } catch (error) {
-        console.error("Error fetching rooms:", error)
-        setRooms([])
-      } finally {
-        setIsLoading(false)
-      }
-    }
+      `
 
-    fetchRooms()
+      const response = await fetch(graphqlEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query }),
+      })
+
+      const data = await response.json()
+      
+      if (data.data && data.data.rooms) {
+        const processedRooms = data.data.rooms.map((room: Room) => ({
+          ...room,
+          isAvailable: room.status === "AVAILABLE"
+        }))
+        setRooms(processedRooms)
+        setLastUpdated(new Date())
+      } else {
+        console.error("Error fetching rooms: Invalid response structure", data)
+        setRooms([])
+      }
+    } catch (error) {
+      console.error("Error fetching rooms:", error)
+      setRooms([])
+    } finally {
+      setIsLoading(false)
+    }
   }, [hotelId])
+
+  // Fetch on initial load, when hotelId changes, or when refreshTrigger changes
+  useEffect(() => {
+    fetchRooms()
+    
+    // Optional: Set up polling for real-time updates
+    const pollingInterval = setInterval(() => {
+      fetchRooms()
+    }, 30000) // 30 seconds
+    
+    return () => clearInterval(pollingInterval)
+  }, [fetchRooms, refreshTrigger]) // Added refreshTrigger to dependencies
 
   if (isLoading) {
     return (
@@ -147,6 +162,12 @@ export default function RoomGrid({ hotelId, floorCount, onCreateBooking }: RoomG
 
   return (
     <div className="space-y-8">
+      {lastUpdated && (
+        <div className="text-xs text-muted-foreground text-right">
+          Last updated: {lastUpdated.toLocaleTimeString()}
+        </div>
+      )}
+      
       {Object.entries(roomsByFloor)
         .sort(([floorA], [floorB]) => Number(floorB) - Number(floorA)) // Sort floors in descending order
         .map(([floor, floorRooms]) => (

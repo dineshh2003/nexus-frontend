@@ -35,10 +35,14 @@ type Room = {
   isAvailable?: boolean
 }
 
+
 export default function CreateBooking() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null)
   const { selectedHotel } = useHotelContext();
+  
+  // Add refreshTrigger state
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
   
   const [hotelData, setHotelData] = useState({
     id: "",
@@ -60,6 +64,13 @@ export default function CreateBooking() {
   const handleCreateBooking = (room: Room) => {
     setSelectedRoom(room)
     setIsFormOpen(true)
+  }
+  
+  // Function to handle successful booking creation
+  const handleBookingSuccess = () => {
+    setIsFormOpen(false)
+    // Trigger a refresh of the room grid
+    setRefreshTrigger(prev => prev + 1)
   }
 
   return (
@@ -108,6 +119,7 @@ export default function CreateBooking() {
               hotelId={hotelData.id}
               floorCount={hotelData.floorCount}
               onCreateBooking={handleCreateBooking}
+              refreshTrigger={refreshTrigger} // Pass the refresh trigger
             />
           )}
         </CardContent>
@@ -127,7 +139,7 @@ export default function CreateBooking() {
             roomId={selectedRoom?.id}
             roomNumber={selectedRoom?.roomNumber}
             room={selectedRoom}
-            onSuccess={() => setIsFormOpen(false)}
+            onSuccess={handleBookingSuccess} // Use the new handler
           />
         </DialogContent>
       </Dialog>
